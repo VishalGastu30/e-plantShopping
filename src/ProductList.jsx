@@ -1,14 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './ProductList.css'
 import CartItem from './CartItem';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from './CartSlice';
 
 function ProductList({ onHomeClick }) {
     const dispatch = useDispatch();
+    const cartItems = useSelector(state => {
+        return state.cart.items;
+    });
     const [showCart, setShowCart] = useState(false);
     const [showPlants, setShowPlants] = useState(false);
     const [addedToCart, setAddedToCart] = useState({});
+
+    // Calculate total quantity of items in cart
+    const calculateTotalQuantity = () => {
+        if (cartItems && cartItems.length > 0) {
+            const total = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+            return total;
+        }
+        return 0;
+    };
 
     const plantsArray = [
         {
@@ -280,6 +292,8 @@ function ProductList({ onHomeClick }) {
         }));
     };
 
+    const totalQuantity = calculateTotalQuantity();
+
     return (
         <div>
             <div className="navbar" style={styleObj}>
@@ -296,16 +310,40 @@ function ProductList({ onHomeClick }) {
                 </div>
                 <div style={styleObjUl}>
                     <div> <a href="#" onClick={(e) => handlePlantsClick(e)} style={styleA}>Plants</a></div>
-                    <div> <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}>
-                        <h1 className='cart'>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" id="IconChangeColor" height="68" width="68">
-                                <rect width="156" height="156" fill="none"></rect>
-                                <circle cx="80" cy="216" r="12"></circle>
-                                <circle cx="184" cy="216" r="12"></circle>
-                                <path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" id="mainIconPathAttribute"></path>
-                            </svg>
-                        </h1>
-                    </a></div>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}>
+                            <h1 className='cart' style={{ margin: 0, padding: 0, position: 'relative' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" height="68" width="68">
+                                    <rect width="156" height="156" fill="none"></rect>
+                                    <circle cx="80" cy="216" r="12"></circle>
+                                    <circle cx="184" cy="216" r="12"></circle>
+                                    <path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                            </h1>
+                        </a>
+                        {totalQuantity > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '5px',
+                                right: '5px',
+                                backgroundColor: 'red',
+                                color: 'white',
+                                borderRadius: '50%',
+                                padding: '2px 6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                minWidth: '18px',
+                                height: '18px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontFamily: 'Arial, sans-serif',
+                                zIndex: 10
+                            }}>
+                                {totalQuantity}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -313,9 +351,11 @@ function ProductList({ onHomeClick }) {
                 <div className="product-grid">
                     {plantsArray.map((category, index) => (
                         <div key={index}>
-                            <h1 style={categoryStyle}>
-                                {category.category}
-                            </h1>
+                            <div className="plantname_heading">
+                                <h1 className="plant_heading">
+                                    {category.category}
+                                </h1>
+                            </div>
                             <div className="product-list">
                                 {category.plants.map((plant, plantIndex) => (
                                     <div className="product-card" key={plantIndex}>
@@ -324,13 +364,13 @@ function ProductList({ onHomeClick }) {
                                             src={plant.image}
                                             alt={plant.name}
                                         />
-                                        <div className="product-title" style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '18px', margin: '10px 0' }}>
+                                        <div className="product-title">
                                             {plant.name}
                                         </div>
-                                        <div className="product-description" style={{ textAlign: 'center', color: '#666', padding: '0 10px' }}>
+                                        <div className="product-description">
                                             {plant.description}
                                         </div>
-                                        <div className="product-cost" style={{ textAlign: 'center', fontSize: '20px', fontWeight: 'bold', color: '#4CAF50', margin: '10px 0' }}>
+                                        <div className="product-cost">
                                             {plant.cost}
                                         </div>
                                         <button
@@ -339,15 +379,7 @@ function ProductList({ onHomeClick }) {
                                             disabled={addedToCart[plant.name]}
                                             style={{
                                                 backgroundColor: addedToCart[plant.name] ? '#cccccc' : '#4CAF50',
-                                                color: 'white',
-                                                padding: '10px 20px',
-                                                border: 'none',
-                                                borderRadius: '5px',
                                                 cursor: addedToCart[plant.name] ? 'not-allowed' : 'pointer',
-                                                fontSize: '16px',
-                                                display: 'block',
-                                                margin: '0 auto',
-                                                width: '80%'
                                             }}
                                         >
                                             {addedToCart[plant.name] ? 'Added to Cart' : 'Add to Cart'}
